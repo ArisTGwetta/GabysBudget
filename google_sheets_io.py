@@ -5,7 +5,13 @@ import pandas as pd
 from google.oauth2.service_account import Credentials
 
 # 🔐 Secure credentials path
-CREDENTIALS_PATH = "C:/Users/arist/Downloads/GithubSecrets/gabysmoneyapp-73bccc529559.json"
+#CREDENTIALS_PATH = "C:/Users/arist/Downloads/GithubSecrets/gabysmoneyapp-73bccc529559.json"
+import streamlit as st
+
+service_account_info = st.secrets["google_sheets"]
+credentials = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+client = gspread.authorize(credentials)
+
 
 # 🔍 Try to load service account credentials
 try:
