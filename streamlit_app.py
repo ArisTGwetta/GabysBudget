@@ -1,3 +1,5 @@
+import streamlit as st
+
 try:
     import gspread
 except ModuleNotFoundError as e:
@@ -5,10 +7,8 @@ except ModuleNotFoundError as e:
     st.stop()
 
 try:
-    import streamlit as st
     import pandas as pd
     from datetime import datetime
-    import gspread
     from google.oauth2.service_account import Credentials
 
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -18,78 +18,57 @@ try:
     sheet = client.open(SHEET_NAME)
 
 except Exception as e:
-    import streamlit as st
     st.error(f"🌧️ App startup error: {e.__class__.__name__}: {e}")
 
-
 # 🧪 Data Sync Functions
+
+# 🌿 Column headers for consistency
+ACCOUNT_COLUMNS = ["Account", "Balance"]
+BUDGET_COLUMNS = ["Category", "Monthly Budget"]
+TRANSACTION_COLUMNS = ["Date", "Description", "Amount", "From Account", "To Account", "Category"]
+
+# 🧪 Load Functions
 def load_accounts_from_sheet():
     try:
-        accounts_ws = sheet.worksheet("Accounts")
-        data = accounts_ws.get_all_values()
-        if len(data) > 1:
-            df = pd.DataFrame(data[1:], columns=data[0])
-            df["Balance"] = df["Balance"].astype(float)
-            st.session_state.accounts = df
-        else:
-            st.session_state.accounts = pd.DataFrame(columns=["Account", "Balance"])
+        df = pd.DataFrame(sheet.worksheet("Accounts").get_all_values()[1:], columns=ACCOUNT_COLUMNS)
+        df["Balance"] = pd.to_numeric(df["Balance"], errors="coerce").fillna(0)
+        st.session_state.accounts = df
     except Exception as e:
         st.error(f"Error loading accounts: {e}")
 
-def save_accounts_to_sheet():
-    try:
-        accounts_ws = sheet.worksheet("Accounts")
-        accounts_ws.clear()
-        rows = [["Account", "Balance"]] + st.session_state.accounts.astype(str).values.tolist()
-        accounts_ws.update("A1", rows)
-    except Exception as e:
-        st.error(f"Error saving accounts: {e}")
-
 def load_budget_from_sheet():
     try:
-        budget_ws = sheet.worksheet("Budget")
-        data = budget_ws.get_all_values()
-        if len(data) > 1:
-            df = pd.DataFrame(data[1:], columns=data[0])
-            df["Monthly Budget"] = df["Monthly Budget"].astype(float)
-            st.session_state.budget = df
-        else:
-            st.session_state.budget = pd.DataFrame(columns=["Category", "Monthly Budget"])
+        df = pd.DataFrame(sheet.worksheet("Budget").get_all_values()[1:], columns=BUDGET_COLUMNS)
+        df["Monthly Budget"] = pd.to_numeric(df["Monthly Budget"], errors="coerce").fillna(0)
+        st.session_state.budget = df
     except Exception as e:
         st.error(f"Error loading budget: {e}")
 
-def save_budget_to_sheet():
-    try:
-        budget_ws = sheet.worksheet("Budget")
-        budget_ws.clear()
-        rows = [["Category", "Monthly Budget"]] + st.session_state.budget.astype(str).values.tolist()
-        budget_ws.update("A1", rows)
-    except Exception as e:
-        st.error(f"Error saving budget: {e}")
-
 def load_transactions_from_sheet():
     try:
-        trans_ws = sheet.worksheet("Transactions")
-        data = trans_ws.get_all_values()
-        if len(data) > 1:
-            df = pd.DataFrame(data[1:], columns=data[0])
-            df["Amount"] = df["Amount"].astype(float)
-            df["Date"] = pd.to_datetime(df["Date"]).dt.date
-            st.session_state.transactions = df
-        else:
-            st.session_state.transactions = pd.DataFrame(columns=[
-                "Date", "Description", "Amount", "From Account", "To Account", "Category"
-            ])
+        df = pd.DataFrame(sheet.worksheet("Transactions").get_all_values()[1:], columns=TRANSACTION_COLUMNS)
+        df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce").fillna(0)
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.date
+        st.session_state.transactions = df
     except Exception as e:
         st.error(f"Error loading transactions: {e}")
 
+# 💾 Save Functions
+def save_accounts_to_sheet():
+    try:
+        sheet.worksheet("Accounts").update("A1", [ACCOUNT_COLUMNS] + st.session_state.accounts.astype(str).values.tolist())
+    except Exception as e:
+        st.error(f"Error saving accounts: {e}")
+
+def save_budget_to_sheet():
+    try:
+        sheet.worksheet("Budget").update("A1", [BUDGET_COLUMNS] + st.session_state.budget.astype(str).values.tolist())
+    except Exception as e:
+        st.error(f"Error saving budget: {e}")
+
 def save_transactions_to_sheet():
     try:
-        trans_ws = sheet.worksheet("Transactions")
-        trans_ws.clear()
-        rows = [["Date", "Description", "Amount", "From Account", "To Account", "Category"]] + \
-            st.session_state.transactions.astype(str).values.tolist()
-        trans_ws.update("A1", rows)
+        sheet.worksheet("Transactions").update("A1", [TRANSACTION_COLUMNS] + st.session_state.transactions.astype(str).values.tolist())
     except Exception as e:
         st.error(f"Error saving transactions: {e}")
 
