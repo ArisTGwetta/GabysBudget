@@ -1,4 +1,10 @@
 try:
+    import gspread
+except ModuleNotFoundError as e:
+    st.error(f"🧩 Missing module: {e}")
+    st.stop()
+
+try:
     import streamlit as st
     import pandas as pd
     from datetime import datetime
@@ -14,7 +20,6 @@ try:
 except Exception as e:
     import streamlit as st
     st.error(f"🌧️ App startup error: {e.__class__.__name__}: {e}")
-
 
 
 # 🧪 Data Sync Functions
