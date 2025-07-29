@@ -20,6 +20,15 @@ try:
 except Exception as e:
     st.error(f"🌧️ App startup error: {e.__class__.__name__}: {e}")
 
+import subprocess
+
+try:
+    packages = subprocess.check_output(["pip", "freeze"]).decode("utf-8")
+    st.text("📦 Installed packages:\n" + packages)
+except Exception as e:
+    st.warning(f"⚠️ Couldn't retrieve packages: {e}")
+
+
 # 🧪 Data Sync Functions
 
 # 🌿 Column headers for consistency
